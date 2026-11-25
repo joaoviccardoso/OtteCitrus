@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { scrollToTop, useSmoothScroll } from './hooks/useSmoothScroll'
+import { useHeroCurtain } from './hooks/useHeroCurtain'
 
 type Lang = 'pt' | 'en'
 type Page = 'home' | 'company' | 'citrus' | 'operations' | 'contact' | 'privacy' | 'terms'
@@ -244,6 +246,16 @@ function SectionIntro({ eyebrow, title, text, light = false }: { eyebrow: string
   return <div className={`section-intro reveal ${light ? 'light' : ''}`}><span className="eyebrow">{eyebrow}</span><h2>{title}</h2>{text && <p>{text}</p>}</div>
 }
 
+function WaveDivider({ color, className = '' }: { color: string; className?: string }) {
+  return (
+    <div className={`wave-divider ${className}`} aria-hidden="true">
+      <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+        <path d="M0,62 C210,118 370,105 548,70 C748,30 900,12 1088,48 C1235,77 1340,94 1440,63 L1440,120 L0,120 Z" fill={color} />
+      </svg>
+    </div>
+  )
+}
+
 export default function App() {
   const [lang, setLang] = useState<Lang>('pt')
   const [page, setPage] = useState<Page>(() => pathToPage[window.location.pathname] || 'home')
@@ -254,7 +266,7 @@ export default function App() {
     window.history.pushState({}, '', pageToPath[next])
     setPage(next)
     setMenuOpen(false)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollToTop()
   }
 
   useEffect(() => {
@@ -271,6 +283,9 @@ export default function App() {
     const timer = window.setTimeout(() => document.querySelectorAll('.reveal').forEach((el) => observer.observe(el)), 30)
     return () => { window.clearTimeout(timer); observer.disconnect() }
   }, [page, lang])
+
+  useSmoothScroll()
+  useHeroCurtain(page === 'home')
 
   const LinkButton = ({ to, children, className = '' }: { to: Page; children: React.ReactNode; className?: string }) =>
     <button className={className} onClick={() => navigate(to)}>{children}</button>
@@ -296,6 +311,7 @@ export default function App() {
       </section>
 
       <section className="section intro-section">
+        <WaveDivider color="#ffffff" className="wave-curtain" />
         <div className="container intro-grid">
           <SectionIntro eyebrow="OTTE CITRUS" title={t.homeIntroTitle} text={t.homeIntroText} />
           <div className="origin-card reveal">
@@ -309,6 +325,7 @@ export default function App() {
       </section>
 
       <section className="section markets">
+        <WaveDivider color="#f4f2eb" className="wave-top" />
         <div className="container">
           <SectionIntro eyebrow={t.national} title={t.marketsTitle} text={t.marketsText} />
           <div className="market-grid">
@@ -316,6 +333,7 @@ export default function App() {
             <article className="market-card reveal"><img src="/images/industry.png" alt="" /><div className="market-overlay" /><div className="market-copy"><span>02</span><h3>{t.industry}</h3><p>{t.industryText}</p><LinkButton to="operations" className="text-link text-link-light">{t.learn}<Icon name="arrow" /></LinkButton></div></article>
           </div>
         </div>
+        <WaveDivider color="#236b3a" className="wave-bottom" />
       </section>
       <Cta />
     </>
@@ -328,7 +346,7 @@ export default function App() {
         <div className="story-image reveal"><img src="/images/packing-house.png" alt="" /><span>CONCHAL<br />SÃO PAULO</span></div>
         <div className="story-copy reveal"><span className="eyebrow">01 — {t.companyStoryTitle}</span><h2>{t.companyStoryTitle}</h2><p>{t.companyStory}</p><div className="name-block"><span className="eyebrow">02 — OTTE CITRUS</span><h3>{t.nameTitle}</h3><p>{t.nameText}</p></div></div>
       </div></section>
-      <section className="section pillars-section"><div className="container"><div className="pillars">{t.pillars.map(([title, text], i) => <article className="pillar reveal" key={title}><span>0{i + 1}</span><Icon name="leaf" size={28} /><h3>{title}</h3><p>{text}</p></article>)}</div></div></section>
+      <section className="section pillars-section"><WaveDivider color="#f4f2eb" className="wave-top" /><div className="container"><div className="pillars">{t.pillars.map(([title, text], i) => <article className="pillar reveal" key={title}><span>0{i + 1}</span><Icon name="leaf" size={28} /><h3>{title}</h3><p>{text}</p></article>)}</div></div></section>
       <Cta />
     </>
   )
@@ -394,7 +412,7 @@ export default function App() {
     </article>
   }
 
-  const pages: Record<Page, React.ReactNode> = { home: <Home />, company: <Company />, citrus: <Citrus />, operations: <Operations />, contact: <Contact />, privacy: <Legal type="privacy" />, terms: <Legal type="terms" /> }
+  const pages: Record<Page, () => React.ReactNode> = { home: Home, company: Company, citrus: Citrus, operations: Operations, contact: Contact, privacy: () => Legal({ type: 'privacy' }), terms: () => Legal({ type: 'terms' }) }
 
   return (
     <div>
@@ -412,7 +430,7 @@ export default function App() {
           </div>
         </div>
       </header>
-      <main>{pages[page]}</main>
+      <main>{pages[page]()}</main>
       <footer className="footer"><div className="container footer-main"><Logo inverted /><p>{t.footerText}</p><div className="footer-nav">{t.nav.map(([key, label]) => <button key={key} onClick={() => navigate(key)}>{label}</button>)}</div></div><div className="container footer-bottom"><span>© {new Date().getFullYear()} OTTE CITRUS. {t.rights}</span><div><button onClick={() => navigate('privacy')}>{t.privacy}</button><button onClick={() => navigate('terms')}>{t.terms}</button></div></div></footer>
       <a className="whatsapp-float" href="https://wa.me/?text=Olá%2C%20OTTE%20CITRUS!" target="_blank" rel="noreferrer" aria-label="WhatsApp"><Icon name="whatsapp" size={27} /></a>
     </div>
